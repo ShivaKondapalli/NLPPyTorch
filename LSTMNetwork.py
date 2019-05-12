@@ -1,45 +1,6 @@
 import torch
 import torch.nn as nn
-import Web_Scraper
-import string
-import unicodedata
-
-#
-# def unicodetoascii(s):
-#     return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn' and c in all_letters)
-#
-#
-all_letters = string.ascii_letters + " .,;'"
-n_letters = len(all_letters)
-
-# girls_list = Web_Scraper.get_data('https://www.verywellfamily.com/top-1000-baby-girl-names-2757832')
-# boys_list = Web_Scraper.get_data('https://www.verywellfamily.com/top-1000-baby-boy-names-2757618')
-#
-# girls_list_ascii = [unicodetoascii(girl) for girl in girls_list]
-# boys_list_ascii = [unicodetoascii(boy) for boy in boys_list]
-#
-#
-# # sex to dictionary mapping
-# sex_to_name = dict()
-#
-# sex_to_name['Girl'] = girls_list
-# sex_to_name['Boy'] = boys_list
-
-
-# n_categories = len(sex_to_name)
-
-
-def lettertoindex(l):
-    """converts letter to index"""
-    return all_letters.index(l)
-
-
-def nametotensor(name):
-    """converts a name into a tensor of shape seq, 1, len(all_letters)"""
-    tensor = torch.zeros(len(name), 1, len(all_letters))
-    for idx, l in enumerate(name):
-        tensor[idx][0][lettertoindex(l)] = 1
-    return tensor
+from RNNClassification import unicodetoascii, n_letters, nametotensor
 
 
 class LSTM(nn.Module):
@@ -81,7 +42,7 @@ def main():
     lstm = LSTM(n_letters, n_hidden, n_categories, num_layers=2)
     print(lstm)
 
-    name = nametotensor('Albert')
+    name = nametotensor(unicodetoascii('Albert'))
     print(name)
     print(name.size())
 
