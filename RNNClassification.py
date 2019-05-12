@@ -119,15 +119,10 @@ class GRU(nn.Module):
 
 # Instantiate models here: from file import
 
+
 n_hidden = 128
 rnn = RNN(n_letters, n_hidden, n_categories)
 gru = GRU(n_letters, n_hidden, n_categories)
-
-
-def languagefromoutput(output):
-    top_v, top_i = output.topk(1)
-    cat_i = top_i[0].item()
-    return all_categories[cat_i], cat_i
 
 
 def random_choice(lst):
