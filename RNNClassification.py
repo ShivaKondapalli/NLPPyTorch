@@ -117,18 +117,11 @@ class GRU(nn.Module):
     def inithidden(self, batch_size):
         return torch.zeros(self.num_layers, batch_size, self.hidden_size)
 
+# Instantiate models here: from file import
 
 n_hidden = 128
 rnn = RNN(n_letters, n_hidden, n_categories)
 gru = GRU(n_letters, n_hidden, n_categories)
-
-name = nametotensor('Albert')
-hidden = torch.zeros(1, n_hidden)
-
-for i in range(name.size()[0]):
-    output, next_hidden = rnn.forward(name[i], hidden)
-
-output = gru.forward(name)
 
 
 def languagefromoutput(output):
@@ -148,10 +141,6 @@ def randomtrainningexample():
     name_tensor = nametotensor(name)
     return category, name, category_tensor, name_tensor
 
-
-for i in range(10):
-    category, name, category_tensor, name_tensor = randomtrainningexample()
-    print(f'category: {category}, name: {name}')
 
 # setting hyperparameters
 learning_rate = 0.005
@@ -198,58 +187,6 @@ def time_taken(start):
     return '%dm %ds' % (min, sec)
 
 
-# Training
-n_iters = 100000
-print_every = 5000
-plot_every = 1000
-
-current_loss_rnn = 0
-all_losses_rnn = []
-
-start = time.time()
-
-print('Training Vanilla RNN')
-print(' ')
-
-# Training Vanilla RNN
-for i in range(1, n_iters+1):
-    category, name, category_tensor, name_tensor = randomtrainningexample()
-    output, loss = train_rnn(category_tensor, name_tensor)
-    current_loss_rnn += loss
-
-    if n_iters % print_every == 0:
-        pred, pred_i = languagefromoutput(output)
-        prediction = 'True' if pred == category else f'False, correct one is {category}'
-        print('%d %d%% (%s) %.4f %s / %s %s' % (i, i / n_iters * 100, time_taken(start), loss, name, pred, prediction))
-
-    if i % plot_every == 0:
-        all_losses_rnn.append(current_loss_rnn/plot_every)
-        current_loss_rnn = 0
-
-
-print('')
-print('############################################################################')
-print('Training GRU network now')
-
-# Training Gated Recurrent Unit
-current_loss_gru = 0
-all_losses_gru = []
-
-for i in range(1, n_iters+1):
-    category, name, category_tensor, name_tensor = randomtrainningexample()
-    output, loss = train_gru(category_tensor, name_tensor)
-    current_loss_gru += loss
-
-    if n_iters % print_every == 0:
-        pred, pred_i = languagefromoutput(output)
-        prediction = 'True' if pred == category else f'False, correct one is {category}'
-        print('%d %d%% (%s) %.4f %s / %s %s' % (i, i / n_iters * 100, time_taken(start), loss, name, pred, prediction))
-
-    if i % plot_every == 0:
-        all_losses_gru.append(current_loss_gru/plot_every)
-        current_loss_gru = 0
-
-
 def evaluate(name_tensor, model):
 
     if model == rnn:
@@ -285,86 +222,159 @@ def predict(name, model, n_predictions=3):
             predictions_lst.append([val, all_categories[cat_idx]])
 
 
-# plot confusion matrix and losses
-confusion_rnn = torch.zeros(n_categories, n_categories)
-n_confusion = 10000
+def main():
+    for i in range(10):
+        category, name, category_tensor, name_tensor = randomtrainningexample()
+        print(f'category: {category}, name: {name}')
 
-# Add one to each row: the real category and each column: the predicted category.
-# The darker the principal diagonal, the better the model.
-for i in range(n_confusion):
-    category, name, category_tensor, name_tensor = randomtrainningexample()
-    output_rnn = evaluate(name_tensor, rnn)
-    guess, guess_i_rnn = languagefromoutput(output_rnn)
-    real_category_i = all_categories.index(category)
-    confusion_rnn[real_category_i][guess_i_rnn] += 1
+    print(f'RNN: {rnn}')
+    print(f'GRU: {gru}')
 
-for i in range(n_categories):
-    confusion_rnn[i] = confusion_rnn[i]/confusion_rnn[i].sum()
+    name = nametotensor('Albert')
+    hidden = torch.zeros(1, n_hidden)
 
-# Set up fig, axes.
-fig = plt.figure()
-ax1 = fig.add_subplot(221)
-cax = ax1.matshow(confusion_rnn.numpy())
-fig.colorbar(cax)
+    for i in range(name.size()[0]):
+        output, next_hidden = rnn.forward(name[i], hidden)
 
-# Set the labels for x and y axes
-ax1.set_xticklabels([''] + all_categories, rotation=90)
-ax1.set_yticklabels([''] + all_categories)
+    print(f'output: {output}, next_hidden: {next_hidden}')
 
-# Major tick locations on the axis are set.
-ax1.xaxis.set_major_locator(ticker.MultipleLocator(1))
-ax1.yaxis.set_major_locator(ticker.MultipleLocator(1))
+    output = gru.forward(name)
+    print(output)
 
-# Plot Vanilla Rnn losses
-ax1 = fig.add_subplot(222)
-ax1.set_title('Vanilla Rnn Losses')
-ax1.set_xlabel('Epochs')
-ax1.set_ylabel('Losses')
-ax1.plot(all_losses_rnn)
+    # Training
+    n_iters = 100000
+    print_every = 5000
+    plot_every = 1000
 
-# Gated Recurrent unit
-confusion_gru = torch.zeros(n_categories, n_categories)
-n_confusion = 10000
+    current_loss_rnn = 0
+    all_losses_rnn = []
 
-# Add one to each row: the real category and each column: the predicted category.
-# The darker the principal diagonal, the better the model.
-for i in range(n_confusion):
-    category, name, category_tensor, name_tensor = randomtrainningexample()
-    output_gru = evaluate(name_tensor, gru)
-    guess, guess_i_gru = languagefromoutput(output_gru)
-    real_category_i = all_categories.index(category)
-    confusion_gru[real_category_i][guess_i_gru] += 1
+    start = time.time()
 
-for i in range(n_categories):
-    confusion_gru[i] = confusion_gru[i]/confusion_gru[i].sum()
+    print('Training Vanilla RNN')
+    print(' ')
 
-ax1 = fig.add_subplot(223)
-cax1 = ax1.matshow(confusion_gru.numpy())
-fig.colorbar(cax1)
+    # Training Vanilla RNN
+    for i in range(1, n_iters+1):
+        category, name, category_tensor, name_tensor = randomtrainningexample()
+        output, loss = train_rnn(category_tensor, name_tensor)
+        current_loss_rnn += loss
 
-# Set the labels for x and y axes
-ax1.set_xticklabels([''] + all_categories, rotation=90)
-ax1.set_yticklabels([''] + all_categories)
+        if n_iters % print_every == 0:
+            pred, pred_i = languagefromoutput(output)
+            prediction = 'True' if pred == category else f'False, correct one is {category}'
+            print('%d %d%% (%s) %.4f %s / %s %s' % (i, i / n_iters * 100, time_taken(start), loss, name, pred, prediction))
 
-# Major tick locations on the axis are set.
-ax1.xaxis.set_major_locator(ticker.MultipleLocator(1))
-ax1.yaxis.set_major_locator(ticker.MultipleLocator(1))
+        if i % plot_every == 0:
+            all_losses_rnn.append(current_loss_rnn/plot_every)
+            current_loss_rnn = 0
 
-# Plot GRU losses
-ax1 = fig.add_subplot(224)
-ax1.set_title('GRU losses')
-ax1.set_xlabel('Epochs')
-ax1.set_ylabel('Losses')
-ax1.plot(all_losses_gru)
+    print('')
+    print('############################################################################')
+    print('Training GRU network now')
 
-plt.show()
+    # Training Gated Recurrent Unit
+    current_loss_gru = 0
+    all_losses_gru = []
 
-# predict for vanilla Rnn
-predict('Akutagawa', rnn)
-predict('Avgerinos', rnn)
-predict('Lestrange', rnn)
+    for i in range(1, n_iters+1):
+        category, name, category_tensor, name_tensor = randomtrainningexample()
+        output, loss = train_gru(category_tensor, name_tensor)
+        current_loss_gru += loss
 
-# predict for GRU
-predict('Akutagawa', gru)
-predict('Avgerinos', gru)
-predict('Lestrange', gru)
+        if n_iters % print_every == 0:
+            pred, pred_i = languagefromoutput(output)
+            prediction = 'True' if pred == category else f'False, correct one is {category}'
+            print('%d %d%% (%s) %.4f %s / %s %s' % (i, i / n_iters * 100, time_taken(start), loss, name, pred, prediction))
+
+        if i % plot_every == 0:
+            all_losses_gru.append(current_loss_gru/plot_every)
+            current_loss_gru = 0
+
+    # plot confusion matrix and losses
+    confusion_rnn = torch.zeros(n_categories, n_categories)
+    n_confusion = 10000
+
+    # Add one to each row: the real category. Each column: the predicted category.
+    # The darker the principal diagonal, the better the model.
+    for i in range(n_confusion):
+        category, name, category_tensor, name_tensor = randomtrainningexample()
+        output_rnn = evaluate(name_tensor, rnn)
+        guess, guess_i_rnn = languagefromoutput(output_rnn)
+        real_category_i = all_categories.index(category)
+        confusion_rnn[real_category_i][guess_i_rnn] += 1
+
+    for i in range(n_categories):
+        confusion_rnn[i] = confusion_rnn[i]/confusion_rnn[i].sum()
+
+    # Set up fig, axes.
+    fig = plt.figure()
+    ax1 = fig.add_subplot(221)
+    cax = ax1.matshow(confusion_rnn.numpy())
+    fig.colorbar(cax)
+
+    # Set the labels for x and y axes
+    ax1.set_xticklabels([''] + all_categories, rotation=90)
+    ax1.set_yticklabels([''] + all_categories)
+
+    # Major tick locations on the axis are set.
+    ax1.xaxis.set_major_locator(ticker.MultipleLocator(1))
+    ax1.yaxis.set_major_locator(ticker.MultipleLocator(1))
+
+    # Plot Vanilla Rnn losses
+    ax1 = fig.add_subplot(222)
+    ax1.set_title('Vanilla Rnn Losses')
+    ax1.set_xlabel('Epochs')
+    ax1.set_ylabel('Losses')
+    ax1.plot(all_losses_rnn)
+
+    # Gated Recurrent unit
+    confusion_gru = torch.zeros(n_categories, n_categories)
+    n_confusion = 10000
+
+    # Add one to each row: the real category and each column: the predicted category.
+    # The darker the principal diagonal, the better the model.
+    for i in range(n_confusion):
+        category, name, category_tensor, name_tensor = randomtrainningexample()
+        output_gru = evaluate(name_tensor, gru)
+        guess, guess_i_gru = languagefromoutput(output_gru)
+        real_category_i = all_categories.index(category)
+        confusion_gru[real_category_i][guess_i_gru] += 1
+
+    for i in range(n_categories):
+        confusion_gru[i] = confusion_gru[i]/confusion_gru[i].sum()
+
+    ax1 = fig.add_subplot(223)
+    cax1 = ax1.matshow(confusion_gru.numpy())
+    fig.colorbar(cax1)
+
+    # Set the labels for x and y axes
+    ax1.set_xticklabels([''] + all_categories, rotation=90)
+    ax1.set_yticklabels([''] + all_categories)
+
+    # Major tick locations on the axis are set.
+    ax1.xaxis.set_major_locator(ticker.MultipleLocator(1))
+    ax1.yaxis.set_major_locator(ticker.MultipleLocator(1))
+
+    # Plot GRU losses
+    ax1 = fig.add_subplot(224)
+    ax1.set_title('GRU losses')
+    ax1.set_xlabel('Epochs')
+    ax1.set_ylabel('Losses')
+    ax1.plot(all_losses_gru)
+
+    plt.show()
+
+    # predict for vanilla Rnn
+    predict('Akutagawa', rnn)
+    predict('Avgerinos', rnn)
+    predict('Lestrange', rnn)
+
+    # predict for GRU
+    predict('Akutagawa', gru)
+    predict('Avgerinos', gru)
+    predict('Lestrange', gru)
+
+
+if __name__ == '__main__':
+    main()
