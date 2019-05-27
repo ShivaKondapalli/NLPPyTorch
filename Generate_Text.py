@@ -110,7 +110,7 @@ batches = get_batches(encoded, 10, 40)
 
 class CharLSTM(nn.Module):
 
-    def __init__(self, chars, hidden_size, n_layers=2, drop_out=0.5, lr= 0.001):
+    def __init__(self, chars, hidden_size, n_layers=2, drop_out=0.5, lr=0.001):
 
         super(CharLSTM, self).__init__()
 
@@ -124,11 +124,11 @@ class CharLSTM(nn.Module):
         # set vocabulary and get indices for these
         self.chars = chars
         self.int2char = dict(enumerate(self.chars))
-        self.char2int = {w : i for i, w in self.int2char.items()}
+        self.char2int = {w: i for i, w in self.int2char.items()}
 
         # define the lstm network, this outputs the next char and cell state and hidden state
         self.lstm = nn.LSTM(input_size=len(self.chars), hidden_size=hidden_size, num_layers=n_layers, dropout=drop_out,
-                       batch_first=True)
+                            batch_first=True)
         # add dropout
         self.drop_out = nn.Dropout(drop_out)
 
@@ -145,7 +145,7 @@ class CharLSTM(nn.Module):
 
         # reshape x: stack the predicted and hidden state outputs
         # cause fully-connected.
-        x = x.view(x.size()[0]*x.size()[1], self.hidden_size)
+        x = x.view(x.size()[0] * x.size()[1], self.hidden_size)
 
         x = self.fc(x)
 
@@ -154,7 +154,6 @@ class CharLSTM(nn.Module):
     def predict(self, char, h=None, cuda=False, top_k=None):
         """given a character, predict the next character in the sequence."""
 
-        # Check for cuda
         if cuda:
             self.cuda()
         else:
@@ -165,30 +164,30 @@ class CharLSTM(nn.Module):
             h = self.init_hidden(1)
 
         # get the integer of character.
-        ch = np.array([[self.char2int[char]]])
+        x = np.array([[self.char2int[char]]])
 
         # one_hot_encode
-        one_hot = one_hot_encode(ch, len(self.chars))
+        x = one_hot_encode(x, len(self.chars))
 
         # convet to tensor
-        one_hot_torch = torch.from_numpy(one_hot)
+        one_hot = torch.from_numpy(x)
 
-        # move input to cuda if available.
         if cuda:
-            one_hot_torch.cuda()
+            one_hot = one_hot.cuda()
 
         # create a tuple of the hidden state
         # this is what LSTM expects
         h = tuple([each.data for each in h])
-        out, h = self.forward(ch, h)
+        out, h = self.forward(one_hot, h)
 
         # Prob distribution over all the characters
         probs = F.softmax(out, dim=1).data
 
         # convert back prob to cpu if model was
         # set to gpu
+
         if cuda:
-            probs.cpu()
+            probs = probs.cpu()
 
         # if top number of preds to get
         # wasn't pass, take the distribution over whole character length
@@ -201,12 +200,9 @@ class CharLSTM(nn.Module):
         # reduce dims of size 1
         probs = probs.numpy().squeeze()
 
-        # sample from top_char with each probs of each character being
-        # the char with higher prob will be chosen since dividing the
-        # highest value with probs.sum() is what is the best.
-        char = np.random.choice(top_ch, p=probs/probs.sum())
+        char = np.random.choice(top_ch, p=probs / probs.sum())
 
-        return self.char2int[char], h
+        return self.int2char[char], h
 
     def init_weights(self):
 
@@ -222,9 +218,10 @@ class CharLSTM(nn.Module):
                 weight.new(self.n_layers, n_seqs, self.hidden_size).zero_())
 
 
-def train(model, data, epochs=10, n_seqs=10, n_steps=40, lr=0.001, clip=5, val_frac= 0.1, cuda=False,
-          print_every=10):
+# Let us start training our network
 
+def train(model, data, epochs=10, n_seqs=10, n_steps=40, lr=0.001, clip=5, val_frac=0.1, cuda=False,
+          print_every=10):
     """ model: the model to b trained
         data: the data on which we train
         epochs: number of epochs to train for
@@ -241,13 +238,12 @@ def train(model, data, epochs=10, n_seqs=10, n_steps=40, lr=0.001, clip=5, val_f
 
     # define optimizer and loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    criterion = nn.CrossEntropyLoss
+    criterion = nn.CrossEntropyLoss()
 
     # trin and validation split
-    val_idx = int(len(data)*(1-val_frac))
+    val_idx = int(len(data) * (1 - val_frac))
     data, val_data = data[:val_idx], data[val_idx:]
 
-    # check for cuda move model to cuda
     if cuda:
         model.cuda()
 
@@ -266,35 +262,39 @@ def train(model, data, epochs=10, n_seqs=10, n_steps=40, lr=0.001, clip=5, val_f
             counter += 1
 
             # one hot encode
-            one_hot = one_hot_encode(x, n_chars)
+            x = one_hot_encode(x, n_chars)
 
             # convert to tensors
-            inputs, targets = torch.from_numpy(one_hot), torch.from_numpy(y)
+            inputs, targets = torch.from_numpy(x), torch.from_numpy(y)
 
             # move inputs and targets to cuda
-            if cuda:
-                inputs, targets = inputs.cuda(), targets.cuda()
+
+            inputs, targets = inputs.cuda(), targets.cuda()
+
+            # New hidden state being created to prevented backpropogating through the
+            # entire history
+            h = tuple([each.data for each in h])
 
             # zero out gradient to prevent accumulation
             model.zero_grad()
 
             # get output and hidden
-            out, h = model(inputs, h)
-            loss = criterion(out, targets.view(n_seqs*n_steps).type(torch.cuda.LongTensor))
+            out, h = model.forward(inputs, h)
+            loss = criterion(out, targets.view(n_seqs * n_steps).type(torch.cuda.LongTensor))
 
             # backpropogate loss
             loss.backward()
 
             # use gradient clipping to prevent exploding gradient
-            nn.utils.clip_grad_norm(model.parameters(), clip)
+            nn.utils.clip_grad_norm_(model.parameters(), clip)
 
             # take a step in the los surface
             optimizer.step()
 
-            if counter % print_every ==0:
+            if counter % print_every == 0:
 
                 # initilize hidden state for validation
-                val_hidden = model.init_hidden(n_steps)
+                val_hidden = model.init_hidden(n_seqs)
                 val_losses = []
 
                 for x, y in get_batches(val_data, n_seqs, n_steps):
@@ -305,39 +305,60 @@ def train(model, data, epochs=10, n_seqs=10, n_steps=40, lr=0.001, clip=5, val_f
 
                     val_hidden = tuple([each.data for each in val_hidden])
 
+                    inputs, targets = x, y
+
                     if cuda:
-                        inputs, targets = x.cuda(), y.cuda()
+                        inputs, targets = inputs.cuda(), targets.cuda()
 
                     out, val_hidden = model.forward(inputs, val_hidden)
 
-                    val_loss = criterion(out, targets.view(n_seqs*n_steps).type(torch.LongTensor))
+                    val_loss = criterion(out, targets.view(n_seqs * n_steps).type(torch.cuda.LongTensor))
 
                     val_losses.append(val_loss.item())
 
-                    print('Epoch:'.format(epoch+1),
-                          'Steps:'.format(counter),
-                          'train loss {.:4f}'.format(loss.item),
-                          'val loss {.:4f}'.format(np.mean(val_losses)))
+                print("Epoch: {}/{}...".format(epoch + 1, epochs),
+                      "Step: {}...".format(counter),
+                      "Loss: {:.4f}...".format(loss.item()),
+                      "Val Loss: {:.4f}".format(np.mean(val_losses)))
 
 
-model = CharLSTM(chars, hidden_size=512, drop_out=0.5, n_layers=2)
+def sample(model, size, prime='The', top_k=None, cuda=False):
+    if cuda:
+        model.cuda()
+    else:
+        model.cpu()
 
-n_seqs, n_steps = 128, 100
+    model.eval()
 
-train(model, encoded, epochs=25, n_seqs=n_seqs, n_steps=n_steps, lr=0.001, cuda=True, print_every=10)
+    # Prime characeters are starting points of some data one can use
+    chars = [ch for ch in prime]
+
+    h = model.init_hidden(1)
+
+    for ch in prime:
+        char, h = model.predict(ch, h, cuda=cuda, top_k=top_k)
+
+    chars.append(char)
+
+    # Now pass in the previous character and get a new one
+    for ii in range(size):
+        char, h = model.predict(chars[-1], h, cuda=cuda, top_k=top_k)
+        chars.append(char)
+
+    return ''.join(chars)
 
 
+def main():
+    model = CharLSTM(chars, hidden_size=512, n_layers=2)
+
+    n_seqs, n_steps = 128, 100
+    train(model, encoded, epochs=25, n_seqs=n_seqs, n_steps=n_steps, lr=0.001, cuda=True, print_every=10)
+
+    print(sample(model, 2000, prime='Horror', top_k=5, cuda=True))
 
 
-
-
-
-
-
-
-
-
-
+if __name__ == "__main__":
+    main()
 
 
 
