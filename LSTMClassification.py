@@ -1,5 +1,5 @@
 from LSTMNetwork import LSTM
-from RNNClassification import get_files, readfiles,  n_letters, nametotensor, time_taken, languagefromoutput
+from RNNClassification import get_files, readfiles,  n_letters, nametotensor, time_taken
 import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt

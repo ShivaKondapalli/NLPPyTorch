@@ -70,6 +70,12 @@ def nametotensor(name):
     return tensor
 
 
+def categoryfromoutput(output):
+    top_v, top_i = output.topk(1)
+    cat_i = top_i[0].item()
+    return all_categories[cat_i], cat_i
+
+
 class RNN(nn.Module):
 
     def __init__(self, input_size, hidden_size, output_size):
@@ -256,7 +262,7 @@ def main():
         current_loss_rnn += loss
 
         if n_iters % print_every == 0:
-            pred, pred_i = languagefromoutput(output)
+            pred, pred_i = categoryfromoutput(output)
             prediction = 'True' if pred == category else f'False, correct one is {category}'
             print('%d %d%% (%s) %.4f %s / %s %s' % (i, i / n_iters * 100, time_taken(start), loss, name, pred, prediction))
 
@@ -278,7 +284,7 @@ def main():
         current_loss_gru += loss
 
         if n_iters % print_every == 0:
-            pred, pred_i = languagefromoutput(output)
+            pred, pred_i = categoryfromoutput(output)
             prediction = 'True' if pred == category else f'False, correct one is {category}'
             print('%d %d%% (%s) %.4f %s / %s %s' % (i, i / n_iters * 100, time_taken(start), loss, name, pred, prediction))
 
@@ -295,7 +301,7 @@ def main():
     for i in range(n_confusion):
         category, name, category_tensor, name_tensor = randomtrainningexample()
         output_rnn = evaluate(name_tensor, rnn)
-        guess, guess_i_rnn = languagefromoutput(output_rnn)
+        guess, guess_i_rnn = categoryfromoutput(output_rnn)
         real_category_i = all_categories.index(category)
         confusion_rnn[real_category_i][guess_i_rnn] += 1
 
@@ -332,7 +338,7 @@ def main():
     for i in range(n_confusion):
         category, name, category_tensor, name_tensor = randomtrainningexample()
         output_gru = evaluate(name_tensor, gru)
-        guess, guess_i_gru = languagefromoutput(output_gru)
+        guess, guess_i_gru = categoryfromoutput(output_gru)
         real_category_i = all_categories.index(category)
         confusion_gru[real_category_i][guess_i_gru] += 1
 
