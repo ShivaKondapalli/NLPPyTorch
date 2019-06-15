@@ -23,8 +23,10 @@ matplotlib - pip install matplotlib or conda install matplotlib
 ## Data
 
 The data for this project is hosted at [Name to Nationality] (https://download.pytorch.org/tutorial/data.zip)
-Extract the zip file into your current working directory. 
+Create a folder called **data** in your *current working directory*. 
+Extract the *data.zip* file into that folder. 
 
 ## GPU vs CPU:
 
-The code was written to run on a cpu. So don't worry if you don't have a cpu. 
+The code was written to run on a cpu. So don't worry if you don't have a Gpu. 
+Notice how the diagonal entries for the GRU network are brighter compare the plain vanilla RNN.
