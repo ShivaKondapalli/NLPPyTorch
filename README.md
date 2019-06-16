@@ -53,4 +53,23 @@ The *data* folder contains 'Girls.txt' and 'Boys.txt' files along with the names
 
 A *Confusion matrix* is plotted to gauge the performance of our deep classifier.
 
-3. 
+## 3. Text Generation with LSTM: Generating movie scripts with LSTM.py - Generate_Text.py:
+
+*Langauge modelling* is one the canonical applications of LSTM models. With gates that regulate the flow of information. These models 
+can remember words that have occured a long time ago to predict the next word. Sampling from this distribution gives us new words. 
+
+Developed a *character level* language model, trainig it on *Apocalypse Now*, to generate new words from the probability distribution 
+found the model upon training. 
+
+## Preqrequsites
+
+```
+PyPDF2 - pip install PyPDF2
+```
+The *PdfFileReader* class reads in pdf content. Extracted the data into a txt file. Cleaned it up and fed into the model. 
+
+## Data
+
+The *Apocalypse_Now.pdf* data is present in the *data* folder. Download and extract to current working directory.
+
+
