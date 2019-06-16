@@ -17,7 +17,7 @@ This is expected as GRu netwokrs remember hidden state information which allows 
 
 ```
 numpy - pip install numpy if using pip or conda install numpy 
-Pytorch - [Choose machine specific installation](https://pytorch.org/).
+Pytorch - Hit this link and[Choose machine specific installation](https://pytorch.org/).
 matplotlib - pip install matplotlib or conda install matplotlib
 ```
 ## Data
