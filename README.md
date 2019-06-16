@@ -4,7 +4,7 @@
 
 The best way to learn is by doing. Here is an implementation of various NLP tasks in *Pytorch*. 
 
-## **1. RNN Classification: RNNClassification.py**
+## 1. RNN Classification: RNNClassification.py
 
 Created and Compared a*plain vanilla* reccurent neural network to a *Gated Recurrent Unit* on classyfying
 the nationality of Individuals based on their names. 
