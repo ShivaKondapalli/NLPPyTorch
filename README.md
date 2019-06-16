@@ -35,3 +35,5 @@ Extract the *data.zip* file into that folder.
 
 The code was written to run on a cpu. So don't worry if you don't have a Gpu. 
 Notice how the diagonal entries for the GRU network are brighter compare the plain vanilla RNN.
+
+
