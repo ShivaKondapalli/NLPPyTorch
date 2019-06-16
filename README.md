@@ -17,12 +17,12 @@ This is expected as GRu netwokrs remember hidden state information which allows 
 
 ```
 numpy - pip install numpy if using pip or conda install numpy 
-Pytorch - link the Pytorch website for machine specific installation
+Pytorch - [Choose machine specific installation](https://pytorch.org/).
 matplotlib - pip install matplotlib or conda install matplotlib
 ```
 ## Data
 
-The data for this project is hosted at [Name to Nationality] (https://download.pytorch.org/tutorial/data.zip)
+The data for this project is hosted at [Name to Nationality](https://download.pytorch.org/tutorial/data.zip).
 Create a folder called **data** in your *current working directory*. 
 Extract the *data.zip* file into that folder. 
 
